@@ -1,7 +1,6 @@
 from suds.client import Client
 from suds.xsd.doctor import Import
 from suds.xsd.doctor import ImportDoctor
-from optparse import OptionParser
 from getpass import getpass
 import os
 import sys
@@ -37,25 +36,12 @@ else:
     wsdl = 'file://' + normalizedfilepath
 
 
-def setcredentials(ip,user,pwd):
-    ip,user,pwd = ip,user,pwd
-
-def dnchange(dntochange, dnp, dnnew):
-    resp = client.service.updateLine(pattern=dntochange, routePartitionName = dnp, newPattern=dnnew)
-    if resp[0] == 200:
-        print ("Success - Changed DN %s in Partition %s to DN %s." % (dntochange,dnp,dnnew))
-    else:
-        print ("Problem finding DN %s in Partition %s" % (dntochange,dnp))
 
 def main():
-    parser = OptionParser()
-    parser.add_option('-f',dest='file',help='Please specify file name with extension.')
-    (options,args) = parser.parse_args()
     global ip,user,pwd,client
     ip = raw_input("Please Enter the IP Address or Hostname of your CUCM > ")
     user = raw_input("Please Enter Your CUCM User ID > ")
     pwd = getpass("Please Enter Your Password > ")
-    setcredentials(ip,user,pwd)
     tns = 'http://schemas.cisco.com/ast/soap/'
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
                  'http://schemas.xmlsoap.org/soap/encoding/')
@@ -78,7 +64,7 @@ def main():
             print ("Success - Changed DN %s to Partition %s." % (dntochange,partnew))
         else:
             print ("Problem finding DN %s in Partition %s" % (dntochange,partold))
-            print resp[1]['faultstring']
+            print resp
 
 
 

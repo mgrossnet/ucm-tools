@@ -28,7 +28,7 @@ The script will prompt with the following:
 * `New Partition >`
 * `Number to be modified? Hit <CR> to exit. >`
 
-After entering a number you will be provided with a success or failure message. You will then be prompted to enter another number. If you hit enter (<CR>) you will be dropped out of the script back to a prompt.
+After entering a number you will be provided with a success or failure message. You will then be prompted to enter another number. If you hit enter <CR\> you will be dropped out of the script back to a prompt.
 
 ### changeEPNMbulk.py
 
