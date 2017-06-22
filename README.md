@@ -23,3 +23,5 @@ The second value is the new External Phone Number Mask - 8005551212.
 SEPBEEFBEEF0001,8005551212
 ```
 
+Execute the script with a `-f` followed by the name of the text file with the information required.
+`changeEPNMbulk.py -f testfile.txt`
