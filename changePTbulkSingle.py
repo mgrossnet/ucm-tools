@@ -78,7 +78,7 @@ def main():
     cucmactualver = cucmsplitver[0] + '.' + cucmsplitver[1]
     print('This cluster is version ' + cucmver)
     if axlver != cucmactualver:
-        print('The actual version is ') + cucmactualver
+        print('You chose the wrong version. The correct version is ') + cucmactualver
         print('Please choose the correct version next time.')
         sys.exit()
     partold = raw_input('Current Partition > ')
