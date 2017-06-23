@@ -20,6 +20,7 @@ cucmver = ''
 wsdl = ''
 
 
+
 def axltoolkit(axlver):
     # This block checks the path you are in and uses the axlsqltoolkit
     # under the path of the script location.
@@ -39,7 +40,16 @@ def axltoolkit(axlver):
 
 def main():
     global ip, user, pwd, client, axlver, wsdl
-    axlver = 'current'
+    print('Select a version based on the options below\n[1] CUCM 11.5\n[2] CUCM 11.0\n[3] CUCM 10.5\n[4] CUCM 10.0\n')
+    cucmver = raw_input('---> ')
+    if cucmver == '2':
+        axlver = '11.0'
+    elif cucmver == '3':
+        axlver = '10.5'
+    elif cucmver == '4':
+        axlver = '10.0'
+    else:
+        axlver = '11.5'
     ip = raw_input("Please Enter the IP Address or Hostname of your CUCM > ")
     user = raw_input("Please Enter Your CUCM User ID > ")
     pwd = getpass("Please Enter Your Password > ")
@@ -58,21 +68,18 @@ def main():
     try:
         verresp = client.service.getCCMVersion()
     except:
-        if verresp[0] == 401:
-            print('Authentication failure')
-        else:
-            print('Unknown Error. Please try again.')
+        print('Unknown Error. Please try again.')
         sys.exit()
-    cucmvergetver1 = verresp[1]['return'].componentVersion.version
-    cucmvergetver2 = cucmvergetver1.split('.')
-    axlver = cucmvergetver2[0] + '.' + cucmvergetver2[1]
-    print('This cluster is version ' + axlver)
-    wsdl = axltoolkit(axlver)
-    try:
-        client = Client(wsdl, location=location, faults=False,
-                    plugins=[ImportDoctor(imp)], username=user, password=pwd)
-    except:
-        print "Error with version or IP address of server. Please try again."
+    if verresp[0] == 401:
+        print('Authentication failure. Wrong username or password.')
+        sys.exit()
+    cucmver = verresp[1]['return'].componentVersion.version
+    cucmsplitver = cucmver.split('.')
+    cucmactualver = cucmsplitver[0] + '.' + cucmsplitver[1]
+    print('This cluster is version ' + cucmver)
+    if axlver != cucmactualver:
+        print('The actual version is ') + cucmactualver
+        print('Please choose the correct version next time.')
         sys.exit()
     partold = raw_input('Current Partition > ')
     partnew = raw_input('New Partition > ')
