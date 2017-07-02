@@ -5,7 +5,7 @@ The Cisco AXL SQL Toolkit is required to use the scripts. The scripts will refer
 
 ## Tools ##
 
-### changeEPNMbulk.py
+### BulkChangeDirectoryNumber.py
 
 This tool was created to change DNs from one partition to another, one at a time.
 
@@ -18,19 +18,12 @@ This tool was created to change DNs from one partition to another, one at a time
 #### Usage
 
 Execute the script without any additional options.
-The script will prompt with the following:
+The script will prompt with questions.
 
-* `What Version of CUCM? 11.5, 10.5, etc. >`
-* `Please Enter the IP Address or Hostname of your CUCM >`
-* `Please Enter Your CUCM User ID >`
-* `Please Enter Your Password `
-* `Current Partition >`
-* `New Partition >`
-* `Number to be modified? Hit <CR> to exit. >`
 
 After entering a number you will be provided with a success or failure message. You will then be prompted to enter another number. If you hit enter <CR\> you will be dropped out of the script back to a prompt.
 
-### changeEPNMbulk.py
+### BulkChangeEPNM.py
 
 This tool was created to change the External Phone Number Mask in bulk to a list of phones.
 
