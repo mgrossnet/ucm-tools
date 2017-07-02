@@ -42,21 +42,28 @@ def axltoolkit(axlver):
 def main():
     parser = OptionParser()
     parser.add_option('-f', dest='file', help='Please specify file name with extension.')
+    parser.add_option('-i', dest='host', help='Please specify UCM address.')
+    parser.add_option('-u', dest='user', help='Enter Username.')
+    parser.add_option('-p', dest='pwd', help='Enter Password.')
+    parser.add_option('-v', dest='ver', help='Enter Version.')
     (options, args) = parser.parse_args()
     global ip, user, pwd, client, axlver, wsdl
-    print('Select a version based on the options below\n[1] CUCM 11.5\n[2] CUCM 11.0\n[3] CUCM 10.5\n[4] CUCM 10.0\n')
-    cucmver = raw_input('---> ')
-    if cucmver == '2':
-        axlver = '11.0'
-    elif cucmver == '3':
-        axlver = '10.5'
-    elif cucmver == '4':
-        axlver = '10.0'
+    if options.ver:
+        axlver = options.ver
     else:
-        axlver = '11.5'
-    ip = raw_input("Please Enter the IP Address or Hostname of your CUCM > ")
-    user = raw_input("Please Enter Your CUCM User ID > ")
-    pwd = getpass("Please Enter Your Password > ")
+        axlver = raw_input("Please Enter the version of the CUCM cluster (10.0, 10.5, 11.0, 11.5) > ")
+    if options.host:
+        ip = options.host
+    else:
+        ip = raw_input("Please Enter the IP Address or Hostname of your CUCM > ")
+    if options.user:
+        user = options.user
+    else:
+        user = raw_input("Please Enter Your CUCM User ID > ")
+    if options.pwd:
+        pwd = options.pwd
+    else:
+        pwd = getpass("Please Enter Your Password > ")
     tns = 'http://schemas.cisco.com/ast/soap/'
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
                  'http://schemas.xmlsoap.org/soap/encoding/')
