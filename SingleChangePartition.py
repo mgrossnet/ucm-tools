@@ -44,7 +44,9 @@ def main():
     parser.add_option('-i', dest='host', help='Please specify UCM address.')
     parser.add_option('-u', dest='user', help='Enter Username.')
     parser.add_option('-p', dest='pwd', help='Enter Password.')
-    parser.add_option('-v', dest='ver', help='Enter Version.')
+    parser.add_option('-v', dest='ver', help='Enter Version. (10.0, 10.5, 11.0, 11.5)')
+    parser.add_option('-c', dest='currentpartition', help='Enter current partition')
+    parser.add_option('-n', dest='newpartition', help='Enter new partition')
     (options, args) = parser.parse_args()
     global ip, user, pwd, client, axlver, wsdl
     if options.ver:
@@ -91,8 +93,14 @@ def main():
         print('You chose the wrong version. The correct version is ') + cucmactualver
         print('Please choose the correct version next time.')
         sys.exit()
-    partold = raw_input('Current Partition > ')
-    partnew = raw_input('New Partition > ')
+    if options.currentpartition:
+        partold = options.currentpartition
+    else:
+        partold = raw_input('Current Partition > ')
+    if options.newpartition:
+        partnew = options.newpartition
+    else:
+        partnew = raw_input('New Partition > ')
     while exitcode != 1:
         dntochange = raw_input('Number to be modified? Hit <CR> to exit. > ')
         if dntochange == '':
