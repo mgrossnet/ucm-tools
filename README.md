@@ -5,7 +5,7 @@ The Cisco AXL SQL Toolkit is required to use the scripts. The scripts will refer
 
 ## Tools ##
 
-### BulkChangeDirectoryNumber.py
+### SingleChangePartition.py
 
 This tool was created to change DNs from one partition to another, one at a time.
 
@@ -45,3 +45,5 @@ SEPBEEFBEEF0001,8005551212
 
 Execute the script with a `-f` followed by the name of the text file with the information required.
 `changeEPNMbulk.py -f testfile.txt`
+
+
