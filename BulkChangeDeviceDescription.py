@@ -19,7 +19,10 @@ ip, user, pwd = '', '', ''
 exitcode = 0
 cucmver = ''
 wsdl = ''
+loginfo = ''
 
+## This script requires a file with phone and device description data separated by comma.
+## phone,description
 
 
 def axltoolkit(axlver):
@@ -92,6 +95,12 @@ def main():
         print('You chose the wrong version. The correct version is ') + cucmactualver
         print('Please choose the correct version next time.')
         sys.exit()
+
+    loginfo = "Log File for: " + options.file
+    logfilesplit = options.file.split('.')
+    logfile = logfilesplit[0] + '.log'
+    print logfile
+
     with open(options.file, 'r') as f:
         for dn_dest in f.readlines():
             if dn_dest == '\n':
@@ -102,9 +111,13 @@ def main():
             update_phone_resp = client.service.updatePhone(name=phone, description=newdevicedesc)
             if update_phone_resp[0] == 200:
                 print ("Success - Changed Device Description on phone %s." % (phone))
+                loginfo = loginfo + "\nSuccess - Updated phone " + phone + " Description"
             else:
                 print ("Problem changing Device Description on phone %s." % (phone))
+                loginfo = loginfo + "\nProblem updating phone " + phone
 
+    with open(logfile, 'w') as f:
+        f.write(loginfo)
 
 
 if __name__ == '__main__':
