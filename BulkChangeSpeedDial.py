@@ -97,7 +97,7 @@ def main():
                 continue
             if ',' in dn_dest:
                 dn_dest = dn_dest.split(',')
-                phone, lookfor, replacewith = dn_dest[0], dn_dest[1], dn_dest[2].rstrip()
+                phone, lookfor, replacewith, replacelabelwith = dn_dest[0], dn_dest[1], dn_dest[2], dn_dest[3].rstrip()
             foundlookingfor = 0
             get_phone_resp = client.service.getPhone(name=phone)
             if get_phone_resp[0] != 200:
@@ -112,7 +112,10 @@ def main():
                 if speeddial_ind.dirn == lookfor:
                     speeddial_ind.dirn = replacewith
                     insidelist['dirn'] = replacewith
-                    insidelist['label'] = speeddial_ind.label
+                    if replacelabelwith == '':
+                        insidelist['label'] = speeddial_ind.label
+                    else:
+                        insidelist['label'] = replacelabelwith
                     insidelist['index'] = speeddial_ind.index
                     dictlist.append(insidelist)
                     foundlookingfor = 1

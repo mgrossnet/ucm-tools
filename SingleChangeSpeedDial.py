@@ -97,6 +97,7 @@ def main():
             break
         lookfor = raw_input('Number to look for > ')
         replacewith = raw_input('Number to replace with > ')
+        replacelabelwith = raw_input('Label to replace with  (<CR> to keep the same) > ')
         foundlookingfor = 0
         get_phone_resp = client.service.getPhone(name=phone)
         if get_phone_resp[0] != 200:
@@ -111,7 +112,10 @@ def main():
             if speeddial_ind.dirn == lookfor:
                 speeddial_ind.dirn = replacewith
                 insidelist['dirn'] = replacewith
-                insidelist['label'] = speeddial_ind.label
+                if replacelabelwith == '':
+                    insidelist['label'] = speeddial_ind.label
+                else:
+                    insidelist['label'] = replacelabelwith
                 insidelist['index'] = speeddial_ind.index
                 dictlist.append(insidelist)
                 foundlookingfor = 1

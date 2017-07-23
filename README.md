@@ -10,6 +10,12 @@ All tools in this repo have the following prerequisites:
     * This directory should be placed in the same directory the script is in as that is how the script references the axlsqltoolkit.
 * User account with AXL access to the UCM server
 
+The tools are named with two different prefixes depending on how the script can be or must be used. The two prefixes are:
+
+- Single
+    + This indicates the script is designed to modify one item type at a time.
+- Bulk
+    + This indicates the script is designed to use an accompanying text file with the data to be modified.
 
 ## Tools ##
 
@@ -45,7 +51,20 @@ This tool was created to change the External Phone Number Mask in bulk to a list
 
 #### Usage
 
-Text file with two values separated by a comma.
+```
+Usage: BulkChangeEPNM.py [options]
+
+Options:
+  -h, --help  show this help message and exit
+  -f FILE     Please specify file name with extension.
+  -i HOST     Please specify UCM address.
+  -u USER     Enter Username.
+  -p PWD      Enter Password.
+  -v VER      Enter Version.
+
+```
+
+Create a text file with two values separated by a comma.
 The first value is the phone name - SEPBEEFBEEF0001.
 The second value is the new External Phone Number Mask - 8005551212.
 
@@ -54,6 +73,39 @@ SEPBEEFBEEF0001,8005551212
 ```
 
 Execute the script with a `-f` followed by the name of the text file with the information required.
-`BulkChangeEPNM.py -f testfile.txt`
 
+### BulkChangeSpeedDial.py
+
+This tool was created to change the Speed Dials in bulk to a list of phones.
+
+#### Usage
+
+```
+Usage: BulkChangeSpeedDial.py [options]
+
+Options:
+  -h, --help  show this help message and exit
+  -f FILE     Please specify file name with extension.
+  -i HOST     Please specify UCM address.
+  -u USER     Enter Username.
+  -p PWD      Enter Password.
+  -v VER      Enter Version.
+
+```
+
+Create a text file with four values separated by a comma.
+The first value is the phone name - SEPBEEFBEEF0001.
+The second value is the speed dial number to be replaced - 8005551212.
+The third value is the new speed dial number - 1112223333.
+The fourth value is the new speed dial label. This fourth value is optional but still requires a comma regardless of whether or not you decide to modify the label.
+
+The second line in the example below demonstrates no modifying the label.
+
+```
+SEPBEEFBEEF0001,1112223333,1112223333,Page 3333
+SEPBEEFBEEF0001,5551212,1015551212,
+SEPBEEFBEEF0001,2223331234,2223331234,Label 1234
+```
+
+Execute the script with a `-f` followed by the name of the text file with the information required.
 
