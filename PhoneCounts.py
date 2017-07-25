@@ -3,7 +3,7 @@ import xml.etree.ElementTree
 from optparse import OptionParser
 from requests.auth import HTTPBasicAuth
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from time import gmtime, strftime
+from time import localtime, strftime
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -12,11 +12,13 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925'}
 loginfo = ''
+modelvaluesorted = []
 
 parser = OptionParser()
 parser.add_option('-i', dest='host', help='Please specify UCM address.')
 parser.add_option('-u', dest='user', help='Enter Username.')
 parser.add_option('-p', dest='pwd', help='Enter Password.')
+parser.add_option('-d', dest='dir', help='Log Directory')
 (options, args) = parser.parse_args()
 
 if options.host:
@@ -31,10 +33,16 @@ if options.pwd:
     serv_pass = options.pwd
 else:
     serv_pass = getpass("Please Enter Your Password > ")
+if options.dir:
+    logfile = options.dir + '/' + CMserver + strftime("-%Y-%m-%d-%H%M%S", localtime()) + '.csv'
+else:
+    logfile = CMserver + strftime("-%Y-%m-%d-%H%M%S", localtime()) + '.csv'
 
-logfile = CMserver + strftime("-%Y-%m-%d-%H%M%S", gmtime()) + '.log'
-loginfo = 'Phone Count for ' + CMserver + ' on ' + strftime("%Y-%m-%d at %H:%M:%S", gmtime())
+loginfo = 'Phone Count for ' + CMserver + ' on ' + strftime("%Y-%m-%d at %H:%M:%S", localtime()) + '\n\nModel,Count'
 
+for modelkey, modelvalue in models.iteritems():
+    modelvaluesorted.append(modelvalue)
+modelvaluesorted.sort()
 
 for modelkey, modelvalue in models.iteritems():
 
