@@ -8,9 +8,12 @@ from time import localtime, strftime
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 # Base soap/xml info found at https://communities.cisco.com/docs/DOC-59446
-# Will try to adapt to suds-jurko in the future to make more pythonic
+# You can add additional models to the dictionary as found in:
+# https://developer.cisco.com/site/sxml/documents/api-reference/risport/
 
-models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925'}
+# I will try to adapt this to use suds-jurko in the future to make it more pythonic
+
+models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925', '659': '8831', '683': '8841', '685': '8861', '36216': '8821'}
 loginfo = ''
 modelvaluesorted = []
 
@@ -80,9 +83,10 @@ for modelkey, modelvalue in models.iteritems():
     for node in CmNodes:
         for devs in node.find("CmDevices"):
             count = count + 1
-
-    print 'Phone model ' + modelvalue + ' has ' + str(count) + ' phones registered'
-    loginfo = loginfo + '\n' + modelvalue + ',' + str(count)
+    
+    if count != 0:
+        print 'Phone model ' + modelvalue + ' has ' + str(count) + ' phones registered'
+        loginfo = loginfo + '\n' + modelvalue + ',' + str(count)
 
 
 
