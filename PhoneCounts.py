@@ -1,21 +1,29 @@
-import requests
-import xml.etree.ElementTree
+from suds.client import Client
+from suds.xsd.doctor import Import
+from suds.xsd.doctor import ImportDoctor
+from getpass import getpass
 from optparse import OptionParser
-from requests.auth import HTTPBasicAuth
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import os
+import sys
+import platform
 from time import localtime, strftime
+import time
+from collections import Counter
+# This is monkeypatching SSL due to a certificate error I get using suds-jurko
+import ssl
+if hasattr(ssl, '_create_unverified_context'):
+    ssl._create_default_https_context = ssl._create_unverified_context
+# End of SSL monkeypatch
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-# Base soap/xml info found at https://communities.cisco.com/docs/DOC-59446
 # You can add additional models to the dictionary as found in:
 # https://developer.cisco.com/site/sxml/documents/api-reference/risport/
 
-# I will try to adapt this to use suds-jurko in the future to make it more pythonic
-
-models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925', '659': '8831', '683': '8841', '685': '8861', '36216': '8821'}
+models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925', '659': '8831', '683': '8841', '685': '8861', '36216': '8821', '336': 'SIP'}
 loginfo = ''
 modelvaluesorted = []
+maclist = ['*0', '*1', '*2', '*3', '*4', '*5', '*6', '*7', '*8', '*9', '*A', '*B', '*C', '*D', '*E', '*F']
+requestitr = 0
+allphones = {}
 
 parser = OptionParser()
 parser.add_option('-i', dest='host', help='Please specify UCM address.')
@@ -41,56 +49,90 @@ if options.dir:
 else:
     logfile = CMserver + strftime("-%Y-%m-%d-%H%M%S", localtime()) + '.csv'
 
-loginfo = 'Phone Count for ' + CMserver + ' on ' + strftime("%Y-%m-%d at %H:%M:%S", localtime()) + '\n\nModel,Count'
+loginfo = 'Phone Count for ' + CMserver + ' on ' + strftime("%Y-%m-%d at %H:%M:%S", localtime()) + '\n\n\nServer,Model,Count'
 
-for modelkey, modelvalue in models.iteritems():
-    modelvaluesorted.append(modelvalue)
-modelvaluesorted.sort()
-
-for modelkey, modelvalue in models.iteritems():
-
-    count = 0
-    raw_xml = """<?xml version="1.0" encoding="UTF-8"?>
-                <SOAP-ENV:Envelope
-                xmlns:ns3="http://www.w3.org/2001/XMLSchema"
-                xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
-                xmlns:ns0="http://schemas.xmlsoap.org/soap/encoding/"
-                xmlns:ns1="http://schemas.cisco.com/ast/soap/"
-                xmlns:ns2="http://schemas.xmlsoap.org/soap/envelope/"
-                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
-                SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
-                <SOAP-ENV:Header/> 
-                    <ns2:Body> 
-                    <ns1:SelectCmDevice> 
-                        <StateInfo xsi:type="ns3:string"></StateInfo> 
-                        <CmSelectionCriteria xsi:type="ns1:CmSelectionCriteria"> 
-                            <ns1:Class xsi:type="ns3:string">Phone</ns1:Class> 
-                            <ns1:Model xsi:type="ns3:unsignedInt">{0}</ns1:Model> 
-                            <ns1:SelectBy xsi:type="ns3:string">Name</ns1:SelectBy> 
-                        </CmSelectionCriteria> 
-                    </ns1:SelectCmDevice> 
-                    </ns2:Body> 
-                </SOAP-ENV:Envelope>""".format(modelkey)  
-    headers={'SOAPAction': '"http://schemas.cisco.com/ast/soap/action/#RisPort#SelectCmDevice"',   
-             'Content-Type': 'text/xml; charset=utf-8',   
-             'Content-type': 'text/xml; charset=utf-8',   
-             'Soapaction': '"http://schemas.cisco.com/ast/soap/action/#RisPort#SelectCmDevice"'}  
-    response=requests.post('https://' + CMserver + ':8443/realtimeservice/services/RisPort',data=raw_xml,headers=headers, auth=HTTPBasicAuth(serv_user, serv_pass),verify=False)
-    tree = xml.etree.ElementTree.fromstring(response.text)
-    CmNodes = tree.find("{http://schemas.xmlsoap.org/soap/envelope/}Body").find("{http://schemas.cisco.com/ast/soap/}SelectCmDeviceResponse").find("SelectCmDeviceResult").find("CmNodes")
-
-    for node in CmNodes:
-        for devs in node.find("CmDevices"):
-            count = count + 1
-    
-    if count != 0:
-        print 'Phone model ' + modelvalue + ' has ' + str(count) + ' phones registered'
-        loginfo = loginfo + '\n' + modelvalue + ',' + str(count)
+tns = 'http://schemas.cisco.com/ast/soap/'
+imp = Import('http://schemas.xmlsoap.org/soap/encoding/','http://schemas.xmlsoap.org/soap/encoding/')
+imp.filter.add(tns) 
+location = 'https://' + CMserver + ':8443/realtimeservice2/services/RISService70/'
+wsdl = 'https://' + CMserver + ':8443/realtimeservice2/services/RISService70?wsdl'
+client = Client(wsdl, location=location, username=serv_user, password=serv_pass)
 
 
+stateInfo = None  
+  
+criteria = client.factory.create('CmSelectionCriteria')  
+item = client.factory.create('SelectItem')  
+mod = client.factory.create('CmSelectionCriteria.Model')  
+  
+criteria.MaxReturnedDevices = 1
+criteria.DeviceClass = 'Phone'  
+criteria.Model = 255  
+criteria.Status = 'Any'  
+criteria.NodeName = ''  
+criteria.SelectBy = 'Name'  
+item.Item = ''  
+criteria.SelectItems.item.append(item)  
+criteria.Protocol = 'Any'  
+criteria.DownloadStatus = 'Any'  
+
+result = client.service.selectCmDevice(stateInfo, criteria)
+
+nodelist = []
+for thing in result.SelectCmDeviceResult.CmNodes.item:
+    nodelist.append(thing.Name)
+
+criteria.MaxReturnedDevices = 1000
+result = client.service.selectCmDevice(stateInfo, criteria)
+
+phoneresults = {}
+
+for node in nodelist:
+    criteria.NodeName = node
+    phoneresults[node] = {}
+    for modelkey, modelvalue in models.iteritems():
+        criteria.Model = modelkey
+        requestitr =+ 1
+        time.sleep(2)
+        if requestitr == 15:
+            print '\nWaiting due to RIS throttle rate'
+            time.sleep(30)
+            requestitr = 0
+        result = client.service.selectCmDevice(stateInfo, criteria)
+        if result.SelectCmDeviceResult.TotalDevicesFound == 0:
+            continue
+        for thing in result.SelectCmDeviceResult.CmNodes.item:
+            currentdevices = thing.CmDevices
+            devcount = 0
+            for device in currentdevices.item:
+                devcount =+ 1
+            if devcount >> 999:
+                devcount = 0
+                for macadd in maclist:
+                    item.Item = macadd
+                    criteria.SelectItems.item = item
+                    time.sleep(4)
+                    result = client.service.selectCmDevice(stateInfo, criteria)
+                    for thing in result.SelectCmDeviceResult.CmNodes.item:
+                        currentdevices = thing.CmDevices
+                        devcount = 0
+                        for device in currentdevices.item:
+                            devcount =+ 1
+                item.Item = ''
+                criteria.SelectItems.item = item
+                requestitr = 0
+            phoneresults[node][modelvalue] = devcount
+
+for node, nresult in phoneresults.iteritems():
+    allphones = Counter(allphones) + Counter(nresult)
+    for modelvalue, pnum in nresult.iteritems():
+        print 'Server ' + node + ' Phone model ' + modelvalue + ' has ' + str(pnum) + ' phones registered'
+        loginfo = loginfo + '\n' + node + ',' + modelvalue + ',' + str(pnum)
+
+loginfo = loginfo + '\n\n\nTotal Phone Count' 
+for modeltype, modeltotal in allphones.iteritems():
+    loginfo = loginfo + '\n' + modeltype + ',' + str(modeltotal)
 
 with open(logfile, 'w') as f:
     f.write(loginfo)
-
 
