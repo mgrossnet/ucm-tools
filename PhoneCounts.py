@@ -6,7 +6,6 @@ from optparse import OptionParser
 import os
 import sys
 import platform
-from time import localtime, strftime
 import time
 from collections import Counter
 # This is monkeypatching SSL due to a certificate error I get using suds-jurko
@@ -17,6 +16,8 @@ if hasattr(ssl, '_create_unverified_context'):
 
 # You can add additional models to the dictionary as found in:
 # https://developer.cisco.com/site/sxml/documents/api-reference/risport/
+# The sleep timers are designed to keep requests under the 15 per minute
+# that the server will enforce for RIS requests.
 
 models = {'622': '7841', '684': '8851', '592': '3905', '484': '7925', '659': '8831', '683': '8841', '685': '8861', '36216': '8821', '336': 'SIP'}
 loginfo = ''
@@ -45,11 +46,11 @@ if options.pwd:
 else:
     serv_pass = getpass("Please Enter Your Password > ")
 if options.dir:
-    logfile = options.dir + '/' + CMserver + strftime("-%Y-%m-%d-%H%M%S", localtime()) + '.csv'
+    logfile = options.dir + '/' + CMserver + time.strftime("-%Y-%m-%d-%H%M%S") + '.csv'
 else:
-    logfile = CMserver + strftime("-%Y-%m-%d-%H%M%S", localtime()) + '.csv'
+    logfile = CMserver + time.strftime("-%Y-%m-%d-%H%M%S") + '.csv'
 
-loginfo = 'Phone Count for ' + CMserver + ' on ' + strftime("%Y-%m-%d at %H:%M:%S", localtime()) + '\n\n\nServer,Model,Count'
+loginfo = 'Phone Count for ' + CMserver + ' on ' + time.strftime("%Y-%m-%d at %H:%M:%S") + '\n\n\nServer,Model,Count'
 
 tns = 'http://schemas.cisco.com/ast/soap/'
 imp = Import('http://schemas.xmlsoap.org/soap/encoding/','http://schemas.xmlsoap.org/soap/encoding/')
@@ -106,6 +107,8 @@ for node in nodelist:
             devcount = 0
             for device in currentdevices.item:
                 devcount =+ 1
+            # If we hit the max of 1000 phones in a request, search by the ending of the phones
+            # This is slow and painful but should allow for all phones to be accounted for
             if devcount >> 999:
                 devcount = 0
                 for macadd in maclist:
