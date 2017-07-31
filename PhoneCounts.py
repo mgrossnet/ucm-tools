@@ -121,7 +121,6 @@ for node in nodelist:
                     result = client.service.selectCmDevice(stateInfo, criteria)
                     for thing in result.SelectCmDeviceResult.CmNodes.item:
                         currentdevices = thing.CmDevices
-                        devcount = 0
                         for device in currentdevices.item:
                             devcount += 1
                 item.Item = ''
