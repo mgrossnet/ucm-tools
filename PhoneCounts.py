@@ -25,6 +25,7 @@ modelvaluesorted = []
 maclist = ['*0', '*1', '*2', '*3', '*4', '*5', '*6', '*7', '*8', '*9', '*A', '*B', '*C', '*D', '*E', '*F']
 requestitr = 0
 allphones = {}
+totalcount = 0
 
 parser = OptionParser()
 parser.add_option('-i', dest='host', help='Please specify UCM address.')
@@ -87,13 +88,14 @@ criteria.MaxReturnedDevices = 1000
 result = client.service.selectCmDevice(stateInfo, criteria)
 
 phoneresults = {}
+nodephones = {}
 
 for node in nodelist:
     criteria.NodeName = node
     phoneresults[node] = {}
     for modelkey, modelvalue in models.iteritems():
         criteria.Model = modelkey
-        requestitr =+ 1
+        requestitr += 1
         time.sleep(2)
         if requestitr == 15:
             print '\nWaiting due to RIS throttle rate'
@@ -106,11 +108,12 @@ for node in nodelist:
             currentdevices = thing.CmDevices
             devcount = 0
             for device in currentdevices.item:
-                devcount =+ 1
+                devcount += 1
             # If we hit the max of 1000 phones in a request, search by the ending of the phones
             # This is slow and painful but should allow for all phones to be accounted for
             if devcount >> 999:
                 devcount = 0
+                print 'Results will take longer as there are more than 1000 devices of a type registered to one server.'
                 for macadd in maclist:
                     item.Item = macadd
                     criteria.SelectItems.item = item
@@ -120,21 +123,30 @@ for node in nodelist:
                         currentdevices = thing.CmDevices
                         devcount = 0
                         for device in currentdevices.item:
-                            devcount =+ 1
+                            devcount += 1
                 item.Item = ''
                 criteria.SelectItems.item = item
                 requestitr = 0
             phoneresults[node][modelvalue] = devcount
+            print 'Server ' + node + ' Phone model ' + modelvalue + ' has ' + str(devcount) + ' phones registered'
 
 for node, nresult in phoneresults.iteritems():
+    nodecount = 0
     allphones = Counter(allphones) + Counter(nresult)
     for modelvalue, pnum in nresult.iteritems():
-        print 'Server ' + node + ' Phone model ' + modelvalue + ' has ' + str(pnum) + ' phones registered'
         loginfo = loginfo + '\n' + node + ',' + modelvalue + ',' + str(pnum)
+        nodecount += pnum
+    nodephones[node] = nodecount
 
 loginfo = loginfo + '\n\n\nTotal Phone Count' 
 for modeltype, modeltotal in allphones.iteritems():
     loginfo = loginfo + '\n' + modeltype + ',' + str(modeltotal)
+
+for node, nodecount in nodephones.iteritems():
+    loginfo = loginfo + '\n' + node + ',' + str(nodecount)
+    totalcount = totalcount + nodecount
+
+loginfo = loginfo + '\nTotal,' + str(totalcount)
 
 with open(logfile, 'w') as f:
     f.write(loginfo)
