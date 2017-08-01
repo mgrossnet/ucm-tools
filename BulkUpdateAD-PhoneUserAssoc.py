@@ -6,11 +6,11 @@ from optparse import OptionParser
 import os
 import sys
 import platform
-# This is monkeypatching SSL due to a certificate error I get using suds-jurko
+# This is "monkeypatching" SSL due to a certificate error I get using suds-jurko
 import ssl
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
-# End of SSL monkeypatch
+# End of SSL "monkeypatch"
 
 # Variable assignments
 f = 0
@@ -22,6 +22,8 @@ loginfo = ''
 ## This script requires a file with phone and user data separated by comma.
 ## phone,user
 
+## A log file is generated using the name of the csv file used but ending with .log
+## The log file is helpful in determining if any of the entries failed.
 
 def axltoolkit(axlver):
     # This block checks the path you are in and uses the axlsqltoolkit
@@ -99,12 +101,12 @@ def main():
     logfile =  logfilesplit[0] + '.log'
     print logfile
     with open(options.file, 'r') as f:
-        for dn_dest in f.readlines():
-            if dn_dest == '\n':
+        for file_line in f.readlines():
+            if file_line == '\n':
                 continue
-            if ',' in dn_dest:
-                dn_dest = dn_dest.split(',')
-                phone, userid = dn_dest[0], dn_dest[1].rstrip()
+            if ',' in file_line:
+                file_line = file_line.split(',')
+                phone, userid = file_line[0], file_line[1].rstrip()
             foundlookingfor = 0
 
             # Get the Phone
@@ -115,12 +117,10 @@ def main():
                 continue
 
             # Define the list of associated devices for the user.
-            # This is a list of 0 or more <device>SEPXXXXXXXX</device> tags
             phone = get_phone_resp[1]['return'].phone.name
             associated_devices = [{'device' : phone}]
 
             # Define the Groups to be added to the user. 
-            # Under "userGroup" is a list of <name>GroupName</name> tags.
             associated_groups = {'userGroup' : [{'name' : 'Standard CCM End Users'}, 
                     {'name' : 'Standard CTI Allow Control of Phones supporting Connected Xfer and conf'},
                     {'name' : 'Standard CTI Allow Control of Phones supporting Rollover Mode'},
@@ -138,7 +138,6 @@ def main():
                                 primaryExtension={'pattern' : dn_pattern, 
                                                 'routePartitionName' : dn_partition})
 
-            # print update_user_resp
             if update_user_resp[0] == 200:
                 print ("Success - Updated user %s." % (userid))
                 loginfo = loginfo + "\nSuccess - Updated user " + userid
@@ -148,7 +147,6 @@ def main():
 
             update_phone_resp = client.service.updatePhone(name=phone, ownerUserName=userid)
 
-            # print update_phone_resp
             if update_phone_resp[0] == 200:
                 print ("Success - Updated phone %s with user %s." % (phone, userid))
                 loginfo = loginfo + "\nSuccess - Updated phone " + phone + " with user " + userid
