@@ -109,3 +109,8 @@ SEPBEEFBEEF0001,2223331234,2223331234,Label 1234
 
 Execute the script with a `-f` followed by the name of the text file with the information required.
 
+### BulkUpdateAD-PhoneUserAssoc.py
+
+This script will take a file formatted as `phone,user` and will update the phone device with the user as the owner and will update the user with the phone as a controlled device. 
+
+It also updates the user groups the user is a member of. But currently it doesn't take the existing user groups and append to it, but rather overwrites with the user groups in the script. I am planning on fixing this at some point by using a getUser to pull the current groups in before updating the user.
