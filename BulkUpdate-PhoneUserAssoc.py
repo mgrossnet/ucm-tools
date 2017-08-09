@@ -107,7 +107,6 @@ def main():
             if ',' in file_line:
                 file_line = file_line.split(',')
                 phone, userid = file_line[0], file_line[1].rstrip()
-            foundlookingfor = 0
 
             # Get the Phone
             get_phone_resp = client.service.getPhone(name=phone)
@@ -127,7 +126,6 @@ def main():
                     {'name' : 'Standard CTI Enabled'}]}
 
             # Get the DN Pattern and Partition of the first line from the getPhone query
-
             dn_pattern = get_phone_resp[1]['return'].phone.lines.line[0].dirn.pattern
             dn_partition = get_phone_resp[1]['return'].phone.lines.line[0].dirn.routePartitionName.value
 
