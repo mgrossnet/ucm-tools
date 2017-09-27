@@ -24,7 +24,6 @@ wsdl = ''
 # DeviceName, DN, DNpartition, DNdescription, DNalertingname, DNdisplay
 
 
-
 def axltoolkit(axlver):
     # This block checks the path you are in and uses the axlsqltoolkit
     # under the path of the script location.
@@ -44,9 +43,9 @@ def axltoolkit(axlver):
 def dnchange(dntochange, dnp, dnnew):
         resp = client.service.updateLine(pattern=dntochange, routePartitionName = dnp, newPattern=dnnew)
         if resp[0] == 200:
-            print ("Success - Changed DN %s in Partition %s to DN %s." % (dntochange,dnp,dnnew))
+            print ("Success - Changed DN %s in Partition %s to DN %s." % (dntochange, dnp, dnnew))
         else:
-            print ("Problem finding DN %s in Partition %s" % (dntochange,dnp))
+            print ("Problem finding DN %s in Partition %s" % (dntochange, dnp))
 
 
 def main():
@@ -77,18 +76,19 @@ def main():
     tns = 'http://schemas.cisco.com/ast/soap/'
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
                  'http://schemas.xmlsoap.org/soap/encoding/')
-    imp.filter.add(tns) 
+    imp.filter.add(tns)
     location = 'https://' + ip + ':8443/axl/'
     wsdl = axltoolkit(axlver)
     try:
         client = Client(wsdl, location=location, faults=False,
-                    plugins=[ImportDoctor(imp)], username=user, password=pwd)
-    except:
+                        plugins=[ImportDoctor(imp)],
+                        username=user, password=pwd)
+    except Exception:
         print "Error with version or IP address of server. Please try again."
         sys.exit()
     try:
         verresp = client.service.getCCMVersion()
-    except:
+    except Exception:
         print('Unknown Error. Please try again.')
         sys.exit()
     if verresp[0] == 401:
@@ -122,7 +122,7 @@ def main():
                     print('Skipping ' + phone + 'due to being not found')
                     loginfo = loginfo + "\nProblem updating phone - Skipping " + phone
                     continue
-                except:
+                except Exception:
                     print('Skipping ' + phone + 'due to being not found')
                     loginfo = loginfo + "\nProblem updating phone - Skipping " + phone
                     continue
@@ -141,17 +141,14 @@ def main():
 
                 update_line_resp = client.service.updateLine(pattern=dirnum, routePartitionName = dnpart, description=dndesc, alertingName = dnalertname, asciiAlertingName = dnalertname)
                 if update_line_resp[0] == 200:
-                    print ("Success - Changed DN %s in Partition %s description and alerting name." % (dirnum,dnpart))
+                    print ("Success - Changed DN %s in Partition %s description and alerting name." % (dirnum, dnpart))
                     loginfo = loginfo + "\nSuccess - Updated phone " + dirnum + " description and alerting name"
                 else:
-                    print ("Problem finding DN %s in Partition %s" % (dntochange,dnp))
+                    print ("Problem finding DN %s in Partition %s" % (dntochange, dnp))
                     loginfo = loginfo + "\nProblem updating line " + dirnum
-
 
     with open(logfile, 'w') as f:
         f.write(loginfo)
-
-
 
 # File should have the following:
 # DeviceName, DN, DNpartition, DNdescription, DNalertingname, DNdisplay
@@ -159,4 +156,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
