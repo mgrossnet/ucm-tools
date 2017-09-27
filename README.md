@@ -72,7 +72,7 @@ Options:
 
 ### BulkChangeDNNames.py
 
-This tool was created to change the line description, line alerting name, and line display name fields on a line associated with a device. The line description and line alerting names can be updated with only a DN and partition. The display name (Caller ID) is a function of the line as associated with a device, which is why the input requires a device name.
+This tool was created to change the line description, line alerting name, and line display name fields on a line associated with a device. The line description and line alerting names can be updated with only a DN and partition. The display name (Caller ID) is a function of the line as associated with a device, which is why the input requires a device name. The caveat is currently this will only work properly if the line you are updating is the first line on the device. I might revisit this sometime to make it functional regardless of the line. But be warned for now this is how it functions.
 
 The file to be used with the script should consist of the following comma separated lines:
 `Device Name, Directory Number, DN Partition, DN Description, DN Alerting Name, DN Display`
