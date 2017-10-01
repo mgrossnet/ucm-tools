@@ -40,14 +40,6 @@ def axltoolkit(axlver):
     return wsdl
 
 
-def dnchange(dntochange, dnp, dnnew):
-        resp = client.service.updateLine(pattern=dntochange, routePartitionName = dnp, newPattern=dnnew)
-        if resp[0] == 200:
-            print ("Success - Changed DN %s in Partition %s to DN %s." % (dntochange, dnp, dnnew))
-        else:
-            print ("Problem finding DN %s in Partition %s" % (dntochange, dnp))
-
-
 def main():
     parser = OptionParser()
     parser.add_option('-f', dest='file', help='Please specify file name with extension.')

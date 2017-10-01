@@ -19,7 +19,10 @@ ip, user, pwd = '', '', ''
 exitcode = 0
 cucmver = ''
 wsdl = ''
+loginfo = ''
 
+## This script requires a file with phone and device description data separated by comma.
+## phone,description
 
 
 def axltoolkit(axlver):
@@ -42,21 +45,28 @@ def axltoolkit(axlver):
 def main():
     parser = OptionParser()
     parser.add_option('-f', dest='file', help='Please specify file name with extension.')
+    parser.add_option('-i', dest='host', help='Please specify UCM address.')
+    parser.add_option('-u', dest='user', help='Enter Username.')
+    parser.add_option('-p', dest='pwd', help='Enter Password.')
+    parser.add_option('-v', dest='ver', help='Enter Version.')
     (options, args) = parser.parse_args()
     global ip, user, pwd, client, axlver, wsdl
-    print('Select a version based on the options below\n[1] CUCM 11.5\n[2] CUCM 11.0\n[3] CUCM 10.5\n[4] CUCM 10.0\n')
-    cucmver = input('---> ')
-    if cucmver == '2':
-        axlver = '11.0'
-    elif cucmver == '3':
-        axlver = '10.5'
-    elif cucmver == '4':
-        axlver = '10.0'
+    if options.ver:
+        axlver = options.ver
     else:
-        axlver = '11.5'
-    ip = input("Please Enter the IP Address or Hostname of your CUCM > ")
-    user = input("Please Enter Your CUCM User ID > ")
-    pwd = getpass("Please Enter Your Password > ")
+        axlver = input("Please Enter the version of the CUCM cluster (10.0, 10.5, 11.0, 11.5) > ")
+    if options.host:
+        ip = options.host
+    else:
+        ip = input("Please Enter the IP Address or Hostname of your CUCM > ")
+    if options.user:
+        user = options.user
+    else:
+        user = input("Please Enter Your CUCM User ID > ")
+    if options.pwd:
+        pwd = options.pwd
+    else:
+        pwd = getpass("Please Enter Your Password > ")
     tns = 'http://schemas.cisco.com/ast/soap/'
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
                  'http://schemas.xmlsoap.org/soap/encoding/')
@@ -67,7 +77,7 @@ def main():
         client = Client(wsdl, location=location, faults=False,
                     plugins=[ImportDoctor(imp)], username=user, password=pwd)
     except:
-        print('Error with version or IP address of server. Please try again.')
+        print ("Error with version or IP address of server. Please try again.")
         sys.exit()
     try:
         verresp = client.service.getCCMVersion()
@@ -85,6 +95,12 @@ def main():
         print('You chose the wrong version. The correct version is ') + cucmactualver
         print('Please choose the correct version next time.')
         sys.exit()
+
+    loginfo = "Log File for: " + options.file
+    logfilesplit = options.file.split('.')
+    logfile = logfilesplit[0] + '.log'
+    print (logfile)
+
     with open(options.file, 'r') as f:
         for dn_dest in f.readlines():
             if dn_dest == '\n':
@@ -95,11 +111,14 @@ def main():
             update_phone_resp = client.service.updatePhone(name=phone, description=newdevicedesc)
             if update_phone_resp[0] == 200:
                 print ("Success - Changed Device Description on phone %s." % (phone))
+                loginfo = loginfo + "\nSuccess - Updated phone " + phone + " Description"
             else:
                 print ("Problem changing Device Description on phone %s." % (phone))
+                loginfo = loginfo + "\nProblem updating phone " + phone
 
+    with open(logfile, 'w') as f:
+        f.write(loginfo)
 
 
 if __name__ == '__main__':
     main()
-
