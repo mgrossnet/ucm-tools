@@ -24,7 +24,12 @@ wsdl = ''
 # DeviceName, DN, DNpartition, DNdescription, DNalertingname, DNdisplay
 
 
-def axltoolkit(axlver):
+def getclient(axlver):
+    tns = 'http://schemas.cisco.com/ast/soap/'
+    imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
+                 'http://schemas.xmlsoap.org/soap/encoding/')
+    imp.filter.add(tns)
+    location = 'https://' + ip + ':8443/axl/'
     # This block checks the path you are in and uses the axlsqltoolkit
     # under the path of the script location.
     fileDir = os.path.dirname(os.path.realpath('__file__'))
@@ -37,8 +42,28 @@ def axltoolkit(axlver):
         wsdl = 'file:///' + normalizedfilepath
     else:
         wsdl = 'file://' + normalizedfilepath
-    return wsdl
+    try:
+        client = Client(wsdl, location=location, faults=False,
+                        plugins=[ImportDoctor(imp)],
+                        username=user, password=pwd)
+    except Exception:
+        print "Error with version or IP address of server. Please try again."
+        sys.exit()
+    return client
 
+def getversion():
+    try:
+        verresp = client.service.getCCMVersion()
+    except Exception:
+        print('Unknown Error. Please try again.')
+        sys.exit()
+    if verresp[0] == 401:
+        print('Authentication failure. Wrong username or password.')
+        sys.exit()
+    cucmver = verresp[1]['return'].componentVersion.version
+    cucmsplitver = cucmver.split('.')
+    cucmactualver = cucmsplitver[0] + '.' + cucmsplitver[1]
+    return cucmactualver
 
 def main():
     parser = OptionParser()
@@ -48,11 +73,7 @@ def main():
     parser.add_option('-p', dest='pwd', help='Enter Password.')
     parser.add_option('-v', dest='ver', help='Enter Version.')
     (options, args) = parser.parse_args()
-    global ip, user, pwd, client, axlver, wsdl
-    if options.ver:
-        axlver = options.ver
-    else:
-        axlver = raw_input("Please Enter the version of the CUCM cluster (10.0, 10.5, 11.0, 11.5) > ")
+    global ip, user, pwd, client, axlver, wsdl, tns, imp, location
     if options.host:
         ip = options.host
     else:
@@ -65,32 +86,18 @@ def main():
         pwd = options.pwd
     else:
         pwd = getpass("Please Enter Your Password > ")
-    tns = 'http://schemas.cisco.com/ast/soap/'
-    imp = Import('http://schemas.xmlsoap.org/soap/encoding/',
-                 'http://schemas.xmlsoap.org/soap/encoding/')
-    imp.filter.add(tns)
-    location = 'https://' + ip + ':8443/axl/'
-    wsdl = axltoolkit(axlver)
-    try:
-        client = Client(wsdl, location=location, faults=False,
-                        plugins=[ImportDoctor(imp)],
-                        username=user, password=pwd)
-    except Exception:
-        print "Error with version or IP address of server. Please try again."
-        sys.exit()
-    try:
-        verresp = client.service.getCCMVersion()
-    except Exception:
-        print('Unknown Error. Please try again.')
-        sys.exit()
-    if verresp[0] == 401:
-        print('Authentication failure. Wrong username or password.')
-        sys.exit()
-    cucmver = verresp[1]['return'].componentVersion.version
-    cucmsplitver = cucmver.split('.')
-    cucmactualver = cucmsplitver[0] + '.' + cucmsplitver[1]
+    if options.ver:
+        axlver = options.ver
+        client = getclient(axlver)
+        cucmver = getversion()
+    else:
+        # Instead of asking, we will try to figure out what version the cluster is running.
+        axlver = '9.0'
+        client = getclient(axlver)
+        cucmver = getversion()
+        axlver = cucmver
+        client = getclient(axlver)
     print('This cluster is version ' + cucmver)
-
     loginfo = "Log File for: " + options.file
     logfilesplit = options.file.split('.')
     logfile = logfilesplit[0] + '.log'
@@ -141,9 +148,6 @@ def main():
 
     with open(logfile, 'w') as f:
         f.write(loginfo)
-
-# File should have the following:
-# DeviceName, DN, DNpartition, DNdescription, DNalertingname, DNdisplay
 
 
 if __name__ == '__main__':
