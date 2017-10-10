@@ -1,6 +1,7 @@
 # README for UCM Tools #
 
-This repo is for all of my Cisco UCM tools using Python.
+This repo is for all of my Cisco UCM tools using Python. I also added a directory with an AppleScript script I put together to automate some graphing of route group/route list in OmniGraffle.
+
 The Cisco AXL SQL Toolkit is required to use the scripts. The scripts will reference the axlsqltoolkit directory under the script location.
 
 All tools in this repo have the following prerequisites:
@@ -260,3 +261,20 @@ Options:
   -p PWD      Enter Password.
   -d DIR      Log Directory
 ```
+
+### Route-Graphing
+
+This is an AppleScript I assembled to help take exported information from either Import/Export or Uplinx and generate a diagram to help me visualize the routing through Route List, Route Group, and SIP Trunks/Gateways. I have a few UCM clusters I work on where things change and I want to be able to look at how things are operating today. This script helps with this. I added example csv files and an example output png file from OmniGraffle. 
+
+I will likely work on this more later. I would like to add some additional information using the exported Route Plan Report to add more blocks with DN/CSS/Partition information. But, for now, this script helps me enough.
+
+#### Usage
+
+Export the Trunks, Route Group, and Route List files from UCM. You need to modify them slightly so they follow the format as shown in the example documents. If editing in Excel, open in a text editor to strip off any trailing commas from the files. If you don't do this you will get diagrams with all kind of empty bubbles and bubbles that are then too large.
+
+Open the AppleScript with the "Script Editor" app and run it. You will be prompted for 3 files, starting with the Trunk/Gateway, then Route Group, and then Route List. The script creates all of the bubbles with the main item, as represented in the first column of the files, as a large bubble with the other elements inside of it. The script also adds all of these named items to a "record" list, similar to a dictionary in Python so we can go back and find the location of these items. Once it generates the bubbles it starts drawing lines between the newly created bubbles attached to the corresponding bubble on the right.
+
+You will likly need to modify some of the order details regarding whether the line is above or below items to look correct.
+
+#### Example Diagram
+![](Route-Graphing/EXAMPLE-OG-Diagram.png)
