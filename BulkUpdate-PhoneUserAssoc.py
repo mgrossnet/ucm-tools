@@ -2,10 +2,13 @@ from suds.client import Client
 from suds.xsd.doctor import Import
 from suds.xsd.doctor import ImportDoctor
 from getpass import getpass
-from optparse import OptionParser
+from suds.plugin import MessagePlugin
+import base64
+import argparse
 import os
 import sys
 import platform
+import pprint
 # This is "monkeypatching" SSL due to a certificate error I get using suds-jurko
 import ssl
 if hasattr(ssl, '_create_unverified_context'):
@@ -43,14 +46,16 @@ def axltoolkit(axlver):
 
 
 def main():
-    parser = OptionParser()
-    parser.add_option('-f', dest='file', help='Please specify file name with extension.')
-    parser.add_option('-i', dest='host', help='Please specify UCM address.')
-    parser.add_option('-u', dest='user', help='Enter Username.')
-    parser.add_option('-p', dest='pwd', help='Enter Password.')
-    parser.add_option('-v', dest='ver', help='Enter Version.')
-    (options, args) = parser.parse_args()
-    global ip, user, pwd, client, axlver, wsdl
+    parser = argparse.ArgumentParser(description='UCM Script Options')
+    parser.add_argument('-i', dest='host', help='Please specify UCM address.')
+    parser.add_argument('-u', dest='user', help='Enter Username.')
+    parser.add_argument('-p', dest='pwd', help='Enter Password.')
+    parser.add_argument('-v', dest='ver', help='Enter Version. (10.0, 10.5, 11.0, 11.5)')
+    parser.add_argument('-f', dest='file', help='Please specify file name with extension.')
+    parser.add_argument('-a', dest='sso', help='SSO enabled "true" or "false" - "false is assumed"')
+    parser.add_argument('-l', dest='log', help='Log file name.')
+    options = parser.parse_args()
+    global ip, user, pwd, client, axlver, wsdl, loginfo
     if options.ver:
         axlver = options.ver
     else:
@@ -73,12 +78,30 @@ def main():
     imp.filter.add(tns) 
     location = 'https://' + ip + ':8443/axl/'
     wsdl = axltoolkit(axlver)
-    try:
-        client = Client(wsdl, location=location, faults=False,
-                    plugins=[ImportDoctor(imp)], username=user, password=pwd)
-    except:
-        print "Error with version or IP address of server. Please try again."
-        sys.exit()
+    if options.sso:
+        ssocheck = options.sso
+    else:
+        ssocheck = "false"
+    if ssocheck == "true":
+        base64string = base64.encodestring('%s:%s' % (user, pwd)).replace('\n', '')
+        authenticationHeader = {
+            "SOAPAction" : "ActionName",
+            "Authorization" : "Basic %s" % base64string
+        }
+        try:
+            client = Client(wsdl,location=location,faults=False,plugins=[ImportDoctor(imp)],
+                    headers=authenticationHeader)
+        except:
+            print "Error with version or IP address of server. Please try again."
+            sys.exit()
+
+    else:
+        try:
+            client = Client(wsdl, location=location, faults=False,
+                        plugins=[ImportDoctor(imp)], username=user, password=pwd)
+        except:
+            print "Error with version or IP address of server. Please try again."
+            sys.exit()
     try:
         verresp = client.service.getCCMVersion()
     except:
@@ -95,7 +118,9 @@ def main():
         print('You chose the wrong version. The correct version is ') + cucmactualver
         print('Please choose the correct version next time.')
         sys.exit()
-    
+
+
+
     loginfo = "Log File for: " + options.file
     logfilesplit = options.file.split('.')
     logfile =  logfilesplit[0] + '.log'
@@ -108,6 +133,25 @@ def main():
                 file_line = file_line.split(',')
                 phone, userid = file_line[0], file_line[1].rstrip()
 
+            # User Groups to add
+            newgroups = [{'name' : 'Standard CCM End Users'}, 
+                    {'name' : 'Standard CTI Allow Control of Phones supporting Connected Xfer and conf'},
+                    {'name' : 'Standard CTI Allow Control of Phones supporting Rollover Mode'},
+                    {'name' : 'Standard CTI Enabled'}]
+            # Get User Groups
+            newgroupsl = []
+            for groupnames in newgroups:
+                newgroupsl.append(groupnames['name'])
+            userinfo = client.service.getUser(userid=userid)
+            usergroup_list_current = userinfo[1]['return'].user.associatedGroups
+            usergroup_list_new = {'userGroup':[]}
+            usergroup_list_new['userGroup'].append(newgroups)
+            for existing_groups in usergroup_list_current[0]:
+                if existing_groups.name in newgroupsl:
+                    continue
+                else:
+                    usergroup_list_new['userGroup'].append({'name':existing_groups.name})
+
             # Get the Phone
             get_phone_resp = client.service.getPhone(name=phone)
             if get_phone_resp[0] != 200:
@@ -119,11 +163,7 @@ def main():
             phone = get_phone_resp[1]['return'].phone.name
             associated_devices = [{'device' : phone}]
 
-            # Define the Groups to be added to the user. 
-            associated_groups = {'userGroup' : [{'name' : 'Standard CCM End Users'}, 
-                    {'name' : 'Standard CTI Allow Control of Phones supporting Connected Xfer and conf'},
-                    {'name' : 'Standard CTI Allow Control of Phones supporting Rollover Mode'},
-                    {'name' : 'Standard CTI Enabled'}]}
+
 
             # Get the DN Pattern and Partition of the first line from the getPhone query
             dn_pattern = get_phone_resp[1]['return'].phone.lines.line[0].dirn.pattern
@@ -132,7 +172,7 @@ def main():
             # Update the user
             update_user_resp = client.service.updateUser(userid=userid, 
                                 associatedDevices=associated_devices, 
-                                associatedGroups=associated_groups, 
+                                associatedGroups=usergroup_list_new, 
                                 primaryExtension={'pattern' : dn_pattern, 
                                                 'routePartitionName' : dn_partition})
 
