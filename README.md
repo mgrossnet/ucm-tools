@@ -172,7 +172,7 @@ Options:
   -v VER      Enter Version.
 ```
 
-It also updates the user groups the user is a member of. But currently it doesn't take the existing user groups and append to it, but rather overwrites with the user groups in the script. I am planning on fixing this at some point by using a getUser to pull the current groups in before updating the user.
+It also updates the user groups the user is a member of. Previous versions of this script just overwrote any groups the user had with the groups we wanted to add. The latest script pulls in all of the existing groups and adds the groups we want to add. So there is no loss of functionality with user groups now.
 
 ### BulkChangeDeviceDescription.py
 
