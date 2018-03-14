@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 import platform
+from pprint import pprint
 # This is monkey patching SSL to not validate the certificate
 import ssl
 if hasattr(ssl, '_create_unverified_context'):
@@ -142,16 +143,20 @@ def main():
             speeddial_new['speeddial'].append(new_sd)
         else:
             speeddial_new = {'speeddial':[]}
+            speeddial_new['speeddial'].append(new_sd)
             for existing_speeddials in master_speeddial_list[0]:
                 if existing_speeddials.index == add_index:
-                    speeddial_new['speeddial'].append(new_sd)
                     continue
                 else:
                     speeddial_new['speeddial'].append({'dirn':existing_speeddials.dirn, 'label':existing_speeddials.label, 'index':existing_speeddials.index})
         update_phone_resp = client.service.updatePhone(name=phone, speeddials=speeddial_new)
         if update_phone_resp[0] == 200:
             print ("Success - Updated phone %s speed dial with %s." % (phone,add_num))
-            print ("Speed dials on this phone are: ") + str(speeddial_new)
+            print ("Speed dials on this phone are: ")
+            speeddiallist_print = sorted(speeddial_new['speeddial'], key=lambda k: k['index'])
+            for spd in speeddiallist_print:
+                print("Index: %-2s  Speed Dial: %-15s  Label: %s" % (spd['index'],spd['dirn'],spd['label']))
+                # pprint(spd)
         else:
             print ("Problem updating phone %s speed dial with %s" % (phone,add_num))
             print update_phone_resp
